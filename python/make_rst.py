@@ -11,7 +11,7 @@ def parse_args():
                     "and a json variable map")
     parser.add_argument(
         '-t', '--template', required=True,
-        help='path to the jinja2 template file')
+        help='path to the jinja2 template dir')
     parser.add_argument(
         '-m', '--map', required=True,
         help='path to the json variable map file')
@@ -35,15 +35,32 @@ def read_var_map(path):
 def main():
     args = parse_args()
 
-    template = read_template(args.template)
+    template_dir = Path(args.template);
+    template = read_template(template_dir/"class.rst.tmpl");
     var_map = read_var_map(args.map);
 
+    written_files = {
+        "classes" : []
+    };
+
+    out_dir = Path(args.output);
     for k,v in var_map.items():
-        out_dir = Path(args.output);
         out_name = v["id"]+".rst";
         out_file = out_dir / out_name;
         with open(out_file, "w") as f:
             f.write(template.render(v))
+            written_files["classes"].append({
+                "id" : v["id"],
+                "name" : v["name"],
+                "is_special" : len(v["specializations"]) > 0 
+            });
+    
+    out_index = out_dir / "index.rst";
+    template_index = read_template(template_dir/"index.rst.tmpl");
+    sorted(written_files["classes"], key=lambda k: k['name']);
+    with open(out_index, "w") as f:
+        f.write(template_index.render(written_files));
+    pass
 
 if __name__ == "__main__":
     main();

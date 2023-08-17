@@ -1,0 +1,11 @@
+API Reference
+=============
+
+.. toctree::
+		:hidden:
+		:maxdepth: 1
+		:caption: Class reference
+		:name: sec-class-ref
+
+{% for class in classes %}{% if class.is_special %}
+		{{ class.id }}{% endif %}{% endfor %}

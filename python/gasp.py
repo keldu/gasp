@@ -9,6 +9,7 @@ import xml.etree.ElementTree as ET
 import json
 from pathlib import Path
 
+
 class GaspAttributeDescription:
     def __init__(self, type_name, name, brief_description, detailed_description):
         self._type_name = type_name;
@@ -26,8 +27,9 @@ class GaspAttributeDescription:
         };
 
 class GaspFunctionDescription:
-    def __init__(self, type_name, name, brief_description, detailed_description, params):
+    def __init__(self, type_name, member_id, name, brief_description, detailed_description, params):
         self._type_name = type_name;
+        self._id = member_id;
         self._name = name;
         self._brief_description = brief_description;
         self._detailed_description = detailed_description;
@@ -37,6 +39,7 @@ class GaspFunctionDescription:
     def gasp_to_json(self):
         return {
             "type" : self._type_name,
+            "id" : self._id,
             "name" : self._name,
             "brief_description" : self._brief_description,
             "detailed_description" : self._detailed_description,
@@ -58,8 +61,14 @@ class GaspClassDescription:
         
         self._private_functions = private_functions;
         self._public_functions = public_functions;
+        self._specializations = [];
+        self._is_special = False;
         pass
-        
+
+    def append_specialization(self, name, cls_id):
+        self._specializations.append({"name" : name, "id" : cls_id});
+        pass
+
     def gasp_to_json(self):
         return {
             "id" : self._id,
@@ -69,8 +78,16 @@ class GaspClassDescription:
             "private_attributes" : self._private_attributes,
             "public_attributes" : self._public_attributes,
             "private_functions" : self._private_functions,
-            "public_functions" : self._public_functions
+            "public_functions" : self._public_functions,
+            "specializations" : self._specializations,
+            "is_special" : self._is_special
         };
+
+def strip_class_name_specialization(name): 
+    return ''.join(name.partition('<')[0:1]).rstrip();
+
+def is_class_name_specialization(name):
+    return strip_class_name_specialization != name;
 
 class GaspEncoder(json.JSONEncoder):
     def default(self, o):
@@ -78,7 +95,7 @@ class GaspEncoder(json.JSONEncoder):
             return o.gasp_to_json();
         return json.JSONEncoder.default(self,o);
 
-def convert_doxy_xml_to_class(class_tree, xml_text):
+def convert_doxy_xml_to_class(class_tree, xml_text, namespace):
     doxy_root = ET.fromstring(xml_text);
 
     compound_class = doxy_root.find("compounddef");
@@ -90,7 +107,9 @@ def convert_doxy_xml_to_class(class_tree, xml_text):
 
     # Find the class descriptions
     class_brief_desc = compound_class.find("briefdescription");
-    class_detailed_desc = compound_class.find("detaileddescription");
+    class_detailed_desc = [];
+    for para in compound_class.find('detaileddescription').findall('para'):
+        class_detailed_desc.append(para.text);
 
     # Find the members and sort them properly
     members_priv_func = [];
@@ -108,7 +127,9 @@ def convert_doxy_xml_to_class(class_tree, xml_text):
                 type_name = memberdef.find('type').text;
                 name = memberdef.find('name').text;
                 mem_brief_desc = memberdef.find('briefdescription').text;
-                mem_detail_desc = memberdef.find('detaileddescription').text;
+                mem_detail_desc = [];
+                for para in memberdef.find('detaileddescription').findall('para'):
+                    mem_detail_desc.append(para.text);
                 members_priv_var.append(GaspAttributeDescription(
                     type_name,
                     name,
@@ -120,7 +141,9 @@ def convert_doxy_xml_to_class(class_tree, xml_text):
                 type_name = memberdef.find('type').text;
                 name = memberdef.find('name').text;
                 mem_brief_desc = memberdef.find('briefdescription').text;
-                mem_detail_desc = memberdef.find('detaileddescription').text;
+                mem_detail_desc = [];
+                for para in memberdef.find('detaileddescription').findall('para'):
+                    mem_detail_desc.append(para.text);
                 members_pub_var.append(GaspAttributeDescription(
                     type_name,
                     name,
@@ -130,9 +153,12 @@ def convert_doxy_xml_to_class(class_tree, xml_text):
         elif section.attrib['kind'] == 'private-func':
             for memberdef in section.findall('memberdef'):
                 type_name = memberdef.find('type').text;
+                member_id = memberdef.attrib["id"];
                 name = memberdef.find('name').text;
                 mem_brief_desc = memberdef.find('briefdescription').text;
-                mem_detail_desc = memberdef.find('detaileddescription').text;
+                mem_detail_desc = [];
+                for para in memberdef.find('detaileddescription').findall('para'):
+                    mem_detail_desc.append(para.text);
                 params = [];
                 for par in memberdef.findall('param'):
                     declname = par.find('declname');
@@ -145,6 +171,7 @@ def convert_doxy_xml_to_class(class_tree, xml_text):
                     });
                 members_priv_func.append(GaspFunctionDescription(
                     type_name,
+                    member_id,
                     name,
                     mem_brief_desc,
                     mem_detail_desc,
@@ -153,9 +180,12 @@ def convert_doxy_xml_to_class(class_tree, xml_text):
         elif section.attrib['kind'] == 'public-func':
             for memberdef in section.findall('memberdef'):
                 type_name = memberdef.find('type').text;
+                member_id = memberdef.attrib["id"];
                 name = memberdef.find('name').text;
                 mem_brief_desc = memberdef.find('briefdescription').text;
-                mem_detail_desc = memberdef.find('detaileddescription').text;
+                mem_detail_desc = [];
+                for para in memberdef.find('detaileddescription').findall('para'):
+                    mem_detail_desc.append(para.text);
                 params = [];
                 for par in memberdef.findall('param'):
                     declname = par.find('declname');
@@ -168,17 +198,23 @@ def convert_doxy_xml_to_class(class_tree, xml_text):
                     });
                 members_pub_func.append(GaspFunctionDescription(
                     type_name,
+                    member_id,
                     name,
                     mem_brief_desc,
                     mem_detail_desc,
                     params
                 ));
-    # 
+    # Strip the namespaced class name with the provided prefix
+    class_name = compound_name.text;
+    if class_name.startswith(namespace):
+        class_name = class_name[len(namespace):]
+
+    # Add the class to the class tree
     gasp_class = GaspClassDescription(
             compound_id,
-            compound_name.text,
+            class_name,
             class_brief_desc.text,
-            class_detailed_desc.text,
+            class_detailed_desc,
             members_priv_var,
             members_pub_var,
             members_priv_func,
@@ -196,6 +232,11 @@ def main():
     );
 
     parser.add_argument('xml_dir');
+    parser.add_argument(
+        '-n','--namespace', required=False,
+        help='Strips the namespace from the class names',
+        default=""
+    );
 
     args = parser.parse_args();
 
@@ -210,8 +251,13 @@ def main():
             if p.is_file():
                 xml_file = open(p, "r");
                 xml_text = xml_file.read();
-                convert_doxy_xml_to_class(class_tree,xml_text);
+                convert_doxy_xml_to_class(class_tree,xml_text,args.namespace);
 
+    for cls_name,cls in class_tree.items():
+        stripped_cls_name = strip_class_name_specialization(cls_name);
+        if stripped_cls_name != cls_name:
+            cls._is_special = True;
+            class_tree[stripped_cls_name].append_specialization(cls_name, class_tree[cls_name]._id);
 
     print(json.dumps(class_tree,indent=2,cls=GaspEncoder));
 

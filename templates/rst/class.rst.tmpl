@@ -6,18 +6,48 @@
 Description  
 -----------  
 
+{% for desc in detailed_description %}
+{{ desc }}
+{% endfor %}
+
+.. rst-class:: classref-reftable-group
+
+{% if specializations|length > 0 %}
+
+Specializations
+---------------
+
+.. toctree::
+		:maxdepth: 1
+{% for spec in specializations %}
+		{{ spec.id }}{% endfor %}
+{% endif %}
+{% if public_functions|length > 0 %}
 Methods  
 -------  
 
-.. table::
-		:widths: auto  
 {% set str_type_max_len = public_functions|map(attribute="type")|default('')|map('count')|max -%}
 {%- set str_name_max_len = public_functions|map(attribute="name")|default('')|map('count')|max -%}
 {%- for func in public_functions %}
-		+-{%- for i in range(str_type_max_len) -%}-{%- endfor %}-+-{%- for i in range(str_name_max_len) -%}-{% endfor %}-+
-		+ {{ "{0}".format(func.type).ljust(str_type_max_len) }} | {{ "{0}".format(func.name).ljust(str_name_max_len) }} |
++-{%- for i in range(str_type_max_len) -%}-{%- endfor %}-+-{%- for i in range(str_name_max_len) -%}-{% endfor %}-+
++ {{ "{0}".format(func.type).ljust(str_type_max_len) }} | {{ "{0}".format(func.name).ljust(str_name_max_len) }} |
 {%- endfor -%}
 {%- if public_functions|length > 0 %}
-		+-{%- for i in range(str_type_max_len) -%}-{%- endfor %}-+-{%- for i in range(str_name_max_len) -%}-{% endfor %}-+
-{%- endif -%}
++-{%- for i in range(str_type_max_len) -%}-{%- endfor %}-+-{%- for i in range(str_name_max_len) -%}-{% endfor %}-+
+{%- endif %}
+{% endif %}
 
+{% if public_functions|length > 0 %}
+Methods Description
+-------------------
+
+{%- for func in public_functions %}
+.. {{ func.id }}:
+
+{{ func.type }}{% if func.type|length > 0 %} {% endif %}**{{ func.name }}** ({%- for param in func.parameters -%}{{ param.type }}{% if not loop.last %},{% endif %} {%- endfor -%})
+{% for desc in func.detailed_description %}
+| {{ desc }}
+{%- endfor %}
+
+{% endfor %}
+{% endif %}
