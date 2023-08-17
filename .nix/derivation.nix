@@ -5,6 +5,7 @@
 , clang-tools
 , forstio
 , cxxopts
+, libxml2
 }:
 
 stdenvNoCC.mkDerivation {
@@ -23,6 +24,7 @@ stdenvNoCC.mkDerivation {
     forstio.async
     forstio.codec
     cxxopts
+    libxml2
   ];
 
   outputs = [ "out" "dev" ];
