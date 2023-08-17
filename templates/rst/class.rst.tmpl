@@ -1,0 +1,23 @@
+:github_url: hide  
+
+{{ name }}  
+{% for i in name %}={%- endfor %}  
+
+Description  
+-----------  
+
+Methods  
+-------  
+
+.. table::
+		:widths: auto  
+{% set str_type_max_len = public_functions|map(attribute="type")|default('')|map('count')|max -%}
+{%- set str_name_max_len = public_functions|map(attribute="name")|default('')|map('count')|max -%}
+{%- for func in public_functions %}
+		+-{%- for i in range(str_type_max_len) -%}-{%- endfor %}-+-{%- for i in range(str_name_max_len) -%}-{% endfor %}-+
+		+ {{ "{0}".format(func.type).ljust(str_type_max_len) }} | {{ "{0}".format(func.name).ljust(str_name_max_len) }} |
+{%- endfor -%}
+{%- if public_functions|length > 0 %}
+		+-{%- for i in range(str_type_max_len) -%}-{%- endfor %}-+-{%- for i in range(str_name_max_len) -%}-{% endfor %}-+
+{%- endif -%}
+
