@@ -2,6 +2,7 @@
 import argparse
 import json
 import jinja2
+from pathlib import Path
 
 
 def parse_args():
@@ -16,7 +17,7 @@ def parse_args():
         help='path to the json variable map file')
     parser.add_argument(
         '-o', '--output', required=True,
-        help='path to the output file')
+        help='path to the output dir')
 
     return parser.parse_args()
 
@@ -35,11 +36,14 @@ def main():
     args = parse_args()
 
     template = read_template(args.template)
-    var_map = read_var_map(args.map)
+    var_map = read_var_map(args.map);
 
-    with open(args.output, "w") as f:
-        f.write(template.render(var_map))
-
+    for k,v in var_map.items():
+        out_dir = Path(args.output);
+        out_name = v["id"]+".rst";
+        out_file = out_dir / out_name;
+        with open(out_file, "w") as f:
+            f.write(template.render(v))
 
 if __name__ == "__main__":
-    main()
+    main();

@@ -1,0 +1,5 @@
+.classref-section-separator {
+		border-color: var(--navbar-heading-color);
+		border-top-width: 3px;
+		margin: 36px 0;
+}
