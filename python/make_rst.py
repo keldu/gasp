@@ -48,7 +48,7 @@ def main():
         out_name = v["id"]+".rst";
         out_file = out_dir / out_name;
         with open(out_file, "w") as f:
-            f.write(template.render(v))
+            f.write(template.render(v));
             written_files["classes"].append({
                 "id" : v["id"],
                 "name" : v["name"],

@@ -28,11 +28,15 @@ Specializations
 Methods  
 -------  
 
-{% set str_type_max_len = public_functions|map(attribute="type")|default('')|map('count')|max -%}
-{%- set str_name_max_len = public_functions|map(attribute="name")|default('')|map('count')|max -%}
+{%- for func in public_functions -%}
+{% set ref_type = ':ref:`'+func.type + '<' + func.id + '>`' %}
+{{ func.update({"ref_type":ref_type}) or "" }}
+{%- endfor -%}
+{% set str_type_max_len = public_functions|map(attribute="ref_type")|map('count')|max -%}
+{%- set str_name_max_len = public_functions|map(attribute="name")|map('count')|max -%}
 {%- for func in public_functions %}
 +-{%- for i in range(str_type_max_len) -%}-{%- endfor %}-+-{%- for i in range(str_name_max_len) -%}-{% endfor %}-+
-+ {{ "{0}".format(func.type).ljust(str_type_max_len) }} | {{ "{0}".format(func.name).ljust(str_name_max_len) }} |
++ {{ "{0}".format(func.ref_type).ljust(str_type_max_len) }} | {{ "{0}".format(func.name).ljust(str_name_max_len) }} |
 {%- endfor -%}
 {%- if public_functions|length > 0 %}
 +-{%- for i in range(str_type_max_len) -%}-{%- endfor %}-+-{%- for i in range(str_name_max_len) -%}-{% endfor %}-+
@@ -44,7 +48,7 @@ Methods Description
 -------------------
 
 {%- for func in public_functions %}
-.. {{ func.id }}:
+.. _{{ func.id }}:
 
 {{ func.type }}{% if func.type|length > 0 %} {% endif %}**{{ func.name }}** ({%- for param in func.parameters -%}{{ param.type }}{% if not loop.last %},{% endif %} {%- endfor -%})
 {% for desc in func.detailed_description %}
