@@ -47,17 +47,18 @@ def main():
     for k,v in var_map.items():
         out_name = v["id"]+".rst";
         out_file = out_dir / out_name;
+        v["specializations"] = sorted(v["specializations"], key=lambda k: k["name"]);
         with open(out_file, "w") as f:
             f.write(template.render(v));
             written_files["classes"].append({
                 "id" : v["id"],
                 "name" : v["name"],
-                "is_special" : len(v["specializations"]) > 0 
+                "is_special" : v["is_special"] 
             });
     
     out_index = out_dir / "index.rst";
     template_index = read_template(template_dir/"index.rst.tmpl");
-    sorted(written_files["classes"], key=lambda k: k['name']);
+    written_files["classes"] = sorted(written_files["classes"], key=lambda k: k["name"]);
     with open(out_index, "w") as f:
         f.write(template_index.render(written_files));
     pass

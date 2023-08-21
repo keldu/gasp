@@ -10,9 +10,22 @@ import json
 from pathlib import Path
 
 
+class GaspTypeRefDescription:
+    def __init__(self, type_name, type_id):
+        self._name = type_name;
+        self._id = type_id;
+        pass
+
+    def gasp_to_json(self):
+        return {
+            "name" : self._name,
+            "id" : self._id
+        };
+
 class GaspAttributeDescription:
-    def __init__(self, type_name, name, brief_description, detailed_description):
+    def __init__(self, type_name, member_id, name, brief_description, detailed_description):
         self._type_name = type_name;
+        self._id = member_id;
         self._name = name;
         self._brief_description = brief_description;
         self._detailed_description = detailed_description;
@@ -21,6 +34,7 @@ class GaspAttributeDescription:
     def gasp_to_json(self):
         return {
             "type" : self._type_name,
+            "id" : self._id,
             "name" : self._name,
             "brief_description" : self._brief_description,
             "detailed_description" : self._detailed_description
@@ -95,6 +109,70 @@ class GaspEncoder(json.JSONEncoder):
             return o.gasp_to_json();
         return json.JSONEncoder.default(self,o);
 
+def convert_doxy_xml_type_to_type_tuple(type_tag):
+    type_tuple = [];
+    for ele in type_tag.iter():
+        if ele.tag == "type":
+            if ele.text:
+                type_tuple.append(ele.text.strip());
+        elif ele.tag == "ref":
+            refid = ele.attrib["refid"];
+            refname = ele.text;
+            type_tuple.append(GaspTypeRefDescription(
+                refname,
+                refid
+            ));
+            if ele.tail:
+                type_tuple.append(ele.tail.strip());
+    return type_tuple;
+
+def convert_doxy_xml_section_to_attribs(member_section, members_attrib):
+    for memberdef in member_section:
+        type_name = convert_doxy_xml_type_to_type_tuple(memberdef.find('type'));
+        member_id = memberdef.attrib["id"];
+        name = memberdef.find('name').text;
+        mem_brief_desc = memberdef.find('briefdescription').text;
+        mem_detail_desc = [];
+        for para in memberdef.find('detaileddescription').findall('para'):
+            mem_detail_desc.append(para.text);
+        members_attrib.append(GaspAttributeDescription(
+            type_name,
+            member_id,
+            name,
+            mem_brief_desc,
+            mem_detail_desc
+        ));
+
+    pass
+def convert_doxy_xml_section_to_functions(member_section, members_func):
+    for memberdef in member_section:
+        type_name = convert_doxy_xml_type_to_type_tuple(memberdef.find('type'));
+        member_id = memberdef.attrib["id"];
+        name = memberdef.find('name').text;
+        mem_brief_desc = memberdef.find('briefdescription').text;
+        mem_detail_desc = [];
+        for para in memberdef.find('detaileddescription').findall('para'):
+            mem_detail_desc.append(para.text);
+        params = [];
+        for par in memberdef.findall('param'):
+            declname = par.find('declname');
+            declname_txt = "";
+            if declname is not None:
+                declname_txt = declname.text;
+            params.append({
+                "type" : convert_doxy_xml_type_to_type_tuple(par.find('type')),
+                "name" : declname_txt
+            });
+        members_func.append(GaspFunctionDescription(
+            type_name,
+            member_id,
+            name,
+            mem_brief_desc,
+            mem_detail_desc,
+            params
+        ));
+    pass
+
 def convert_doxy_xml_to_class(class_tree, xml_text, namespace):
     doxy_root = ET.fromstring(xml_text);
 
@@ -123,87 +201,13 @@ def convert_doxy_xml_to_class(class_tree, xml_text, namespace):
 
     for section in compound_class.findall('sectiondef'):
         if section.attrib['kind'] == 'private-attrib':
-            for memberdef in section.findall('memberdef'):
-                type_name = memberdef.find('type').text;
-                name = memberdef.find('name').text;
-                mem_brief_desc = memberdef.find('briefdescription').text;
-                mem_detail_desc = [];
-                for para in memberdef.find('detaileddescription').findall('para'):
-                    mem_detail_desc.append(para.text);
-                members_priv_var.append(GaspAttributeDescription(
-                    type_name,
-                    name,
-                    mem_brief_desc,
-                    mem_detail_desc
-                ));
+            convert_doxy_xml_section_to_attribs(section.findall('memberdef'), members_priv_var);
         elif section.attrib['kind'] == 'public-attrib':
-            for memberdef in section.findall('memberdef'):
-                type_name = memberdef.find('type').text;
-                name = memberdef.find('name').text;
-                mem_brief_desc = memberdef.find('briefdescription').text;
-                mem_detail_desc = [];
-                for para in memberdef.find('detaileddescription').findall('para'):
-                    mem_detail_desc.append(para.text);
-                members_pub_var.append(GaspAttributeDescription(
-                    type_name,
-                    name,
-                    mem_brief_desc,
-                    mem_detail_desc
-                ));
+            convert_doxy_xml_section_to_attribs(section.findall('memberdef'), members_pub_var);
         elif section.attrib['kind'] == 'private-func':
-            for memberdef in section.findall('memberdef'):
-                type_name = memberdef.find('type').text;
-                member_id = memberdef.attrib["id"];
-                name = memberdef.find('name').text;
-                mem_brief_desc = memberdef.find('briefdescription').text;
-                mem_detail_desc = [];
-                for para in memberdef.find('detaileddescription').findall('para'):
-                    mem_detail_desc.append(para.text);
-                params = [];
-                for par in memberdef.findall('param'):
-                    declname = par.find('declname');
-                    declname_txt = "";
-                    if declname is not None:
-                        declname_txt = declname.text;
-                    params.append({
-                        "type" : par.find('type').text,
-                        "name" : declname_txt
-                    });
-                members_priv_func.append(GaspFunctionDescription(
-                    type_name,
-                    member_id,
-                    name,
-                    mem_brief_desc,
-                    mem_detail_desc,
-                    params
-                ));
+            convert_doxy_xml_section_to_functions(section.findall('memberdef'), members_priv_func);
         elif section.attrib['kind'] == 'public-func':
-            for memberdef in section.findall('memberdef'):
-                type_name = memberdef.find('type').text;
-                member_id = memberdef.attrib["id"];
-                name = memberdef.find('name').text;
-                mem_brief_desc = memberdef.find('briefdescription').text;
-                mem_detail_desc = [];
-                for para in memberdef.find('detaileddescription').findall('para'):
-                    mem_detail_desc.append(para.text);
-                params = [];
-                for par in memberdef.findall('param'):
-                    declname = par.find('declname');
-                    declname_txt = "";
-                    if declname is not None:
-                        declname_txt = declname.text;
-                    params.append({
-                        "type" : par.find('type').text,
-                        "name" : declname_txt
-                    });
-                members_pub_func.append(GaspFunctionDescription(
-                    type_name,
-                    member_id,
-                    name,
-                    mem_brief_desc,
-                    mem_detail_desc,
-                    params
-                ));
+            convert_doxy_xml_section_to_functions(section.findall('memberdef'), members_pub_func);
     # Strip the namespaced class name with the provided prefix
     class_name = compound_name.text;
     if class_name.startswith(namespace):
@@ -221,7 +225,7 @@ def convert_doxy_xml_to_class(class_tree, xml_text, namespace):
             members_pub_func
     );
 
-    class_tree[compound_name.text] = gasp_class;
+    class_tree[compound_id] = gasp_class;
 
     pass
 
@@ -254,10 +258,17 @@ def main():
                 convert_doxy_xml_to_class(class_tree,xml_text,args.namespace);
 
     for cls_name,cls in class_tree.items():
-        stripped_cls_name = strip_class_name_specialization(cls_name);
-        if stripped_cls_name != cls_name:
+        stripped_cls_name = strip_class_name_specialization(cls._name);
+        if stripped_cls_name != cls._name:
             cls._is_special = True;
-            class_tree[stripped_cls_name].append_specialization(cls_name, class_tree[cls_name]._id);
+            stripped_ids = [];
+            for k,v in class_tree.items():
+                if v._name == stripped_cls_name:
+                    stripped_ids.append(k);
+            if len(stripped_ids) != 1:
+                print("Panic. This is supposed to be a unique name which exists exactly once. Name: " + stripped_cls_name);
+                exit(-1);
+            class_tree[stripped_ids[0]].append_specialization(cls_name, class_tree[cls_name]._id);
 
     print(json.dumps(class_tree,indent=2,cls=GaspEncoder));
 

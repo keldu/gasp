@@ -7,5 +7,5 @@ API Reference
 		:caption: Class reference
 		:name: sec-class-ref
 
-{% for class in classes %}{% if class.is_special %}
+{% for class in classes %}{% if not class.is_special %}
 		{{ class.id }}{% endif %}{% endfor %}

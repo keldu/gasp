@@ -24,23 +24,80 @@ Specializations
 {% for spec in specializations %}
 		{{ spec.id }}{% endfor %}
 {% endif %}
+{% if private_attributes|length > 0 %}
+Vars
+----
+
+{%- for vars in private_attributes -%}
+{% set ref_name = ':ref:`'+vars.name + '<' + vars.id + '>`' %}
+{{ vars.update({"ref_name":ref_name}) or "" }}
+{%- set ref_type_tuple = [] -%}
+{%- for type_ele in vars.type -%}
+{%- if type_ele is string -%}{{ ref_type_tuple.append(type_ele) or "" }}
+{%- else -%}
+{%- set ele_ref_type = ':ref:`'+ type_ele.name + '<' + type_ele.id + '>`' -%}{{ ref_type_tuple.append(ele_ref_type) or "" }}{%- endif -%}
+{%- endfor -%}
+{% set ref_type = " ".join(ref_type_tuple) %}
+{{ vars.update({"ref_type":ref_type}) or "" }}
+{%- endfor -%}
+{% set str_type_max_len = private_attributes|map(attribute="ref_type")|map('count')|max -%}
+{%- set str_name_max_len = private_attributes|map(attribute="ref_name")|map('count')|max -%}
+{%- for vars in private_attributes %}
++-{%- for i in range(str_type_max_len) -%}-{%- endfor %}-+-{%- for i in range(str_name_max_len) -%}-{% endfor %}-+
++ {{ "{0}".format(vars.ref_type).ljust(str_type_max_len) }} | {{ "{0}".format(vars.ref_name).ljust(str_name_max_len) }} |
+{%- endfor -%}
+{%- if private_attributes|length > 0 %}
++-{%- for i in range(str_type_max_len) -%}-{%- endfor %}-+-{%- for i in range(str_name_max_len) -%}-{% endfor %}-+
+{%- endif %}
+{% endif %}
+
 {% if public_functions|length > 0 %}
 Methods  
 -------  
 
 {%- for func in public_functions -%}
-{% set ref_type = ':ref:`'+func.type + '<' + func.id + '>`' %}
+{% set ref_name = ':ref:`'+func.name + '<' + func.id + '>`' %}
+{%- set ref_func_tuple = [] -%}
+{{ func.update({"ref_name":ref_name}) or "" }}
+{%- set ref_type_tuple = [] -%}
+{%- for type_ele in func.type -%}
+{%- if type_ele is string -%}{{ ref_type_tuple.append(type_ele) or "" }}
+{%- else -%}
+{%- set ele_ref_type = ':ref:`'+ type_ele.name + '<' + type_ele.id + '>`' -%}{{ ref_type_tuple.append(ele_ref_type) or "" }}{%- endif -%}
+{%- endfor -%}
+{% set ref_type = " ".join(ref_type_tuple) %}
 {{ func.update({"ref_type":ref_type}) or "" }}
+{%- for param in func.parameters -%}
+{%- set ref_param_type_tuple = [] -%}
+{%- for param_type_ele in param.type -%}
+{%- if param_type_ele is string -%}{{ ref_param_type_tuple.append(param_type_ele) or "" }}
+{%- else -%}
+{%- set ele_param_ref_type = ':ref:`'+ param_type_ele.name + '<' + param_type_ele.id + '>`' -%}{{ ref_param_type_tuple.append(ele_param_ref_type) or "" }}{%- endif -%}
+{%- endfor -%}
+{%- set param_ref_type = " ".join(ref_param_type_tuple) -%}{{ param.update({"ref_type":param_ref_type }) or "" }}{{ ref_func_tuple.append(param_ref_type) or "" }}
+{%- endfor -%}
+{%- set ref_func_param = ", ".join(ref_func_tuple) -%}
+{%- set ref_func = ref_name + " **(** " + ref_func_param + " **)**" -%}{{ func.update({"ref_func":ref_func}) or "" }}
 {%- endfor -%}
 {% set str_type_max_len = public_functions|map(attribute="ref_type")|map('count')|max -%}
-{%- set str_name_max_len = public_functions|map(attribute="name")|map('count')|max -%}
+{%- set str_name_max_len = public_functions|map(attribute="ref_func")|map('count')|max -%}
 {%- for func in public_functions %}
 +-{%- for i in range(str_type_max_len) -%}-{%- endfor %}-+-{%- for i in range(str_name_max_len) -%}-{% endfor %}-+
-+ {{ "{0}".format(func.ref_type).ljust(str_type_max_len) }} | {{ "{0}".format(func.name).ljust(str_name_max_len) }} |
++ {{ "{0}".format(func.ref_type).ljust(str_type_max_len) }} | {{ "{0}".format(func.ref_func).ljust(str_name_max_len) }} |
 {%- endfor -%}
 {%- if public_functions|length > 0 %}
 +-{%- for i in range(str_type_max_len) -%}-{%- endfor %}-+-{%- for i in range(str_name_max_len) -%}-{% endfor %}-+
 {%- endif %}
+{% endif %}
+
+{% if private_attributes|length > 0 %}
+Vars Description
+----------------
+
+{%- for vars in private_attributes %}
+.. _{{ vars.id }}:
+{{ vars.ref_type }}{% if vars.ref_type|length > 0 %} {% endif -%}{{ vars.ref_name }}
+{% endfor %}
 {% endif %}
 
 {% if public_functions|length > 0 %}
@@ -49,8 +106,7 @@ Methods Description
 
 {%- for func in public_functions %}
 .. _{{ func.id }}:
-
-{{ func.type }}{% if func.type|length > 0 %} {% endif %}**{{ func.name }}** ({%- for param in func.parameters -%}{{ param.type }}{% if not loop.last %},{% endif %} {%- endfor -%})
+{{ func.ref_type }}{% if func.ref_type|length > 0 %} {% endif -%}{{ func.ref_func }}
 {% for desc in func.detailed_description %}
 | {{ desc }}
 {%- endfor %}
