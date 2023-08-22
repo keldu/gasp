@@ -1,10 +1,10 @@
-.. Gasp-Sphinx Example documentation master file, created by
-   sphinx-quickstart on Thu Aug 17 11:54:58 2023.
+.. Gasp Example documentation master file, created by
+   sphinx-quickstart on Tue Aug 22 16:01:56 2023.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Gasp-Sphinx Example's documentation!
-===============================================
+Welcome to Gasp Example's documentation!
+========================================
 
 .. toctree::
    :maxdepth: 2

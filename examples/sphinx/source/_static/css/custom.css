@@ -1,3 +1,13 @@
+:root {
+		--content-background-color: #fff5e1;
+		--navbar-background-color: #263547;
+		--navbar-heading-color: #eeeeee;
+}
+
+.wy-nav-side {
+		background: var(--navbar-background-color);
+}
+
 .classref-section-separator {
 		border-color: var(--navbar-heading-color);
 		border-top-width: 3px;

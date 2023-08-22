@@ -6,7 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'Gasp-Sphinx Example'
+project = 'Gasp Example'
 copyright = '2023, Claudius "keldu" Holeksa'
 author = 'Claudius "keldu" Holeksa'
 release = '2023'
@@ -15,7 +15,7 @@ release = '2023'
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    'sphinx_rtd_theme'
+    'sphinx_rtd_theme'        
 ]
 
 templates_path = ['_templates']
