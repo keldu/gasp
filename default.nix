@@ -3,7 +3,9 @@
 
 let
 
-in {
-  sphinx-example = pkgs.callPackage examples/sphinx/derivation.nix {
+in rec {
+  gasp = pkgs.callPackage .nix/derivation.nix {};
+  gasp-sphinx-example = pkgs.callPackage examples/sphinx/derivation.nix {
+    inherit gasp;
   };
 }
