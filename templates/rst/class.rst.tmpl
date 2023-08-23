@@ -12,9 +12,8 @@ Description
 {{ desc }}
 {% endfor %}
 
-.. rst-class:: classref-reftable-group
-
 {% if specializations|length > 0 %}
+.. rst-class:: classref-reftable-group
 
 Specializations
 ---------------
@@ -25,6 +24,8 @@ Specializations
 		{{ spec.id }}{% endfor %}
 {% endif %}
 {% if private_attributes|length > 0 %}
+.. rst-class:: classref-reftable-group
+
 Vars
 ----
 
@@ -52,6 +53,8 @@ Vars
 {% endif %}
 
 {% if public_functions|length > 0 %}
+.. rst-class:: classref-reftable-group
+
 Methods  
 -------  
 
@@ -91,16 +94,29 @@ Methods
 {% endif %}
 
 {% if private_attributes|length > 0 %}
+.. rst-class:: classref-section-separator
+
+----
+
 Vars Description
 ----------------
 
 {%- for vars in private_attributes %}
 .. _{{ vars.id }}:
 {{ vars.ref_type }}{% if vars.ref_type|length > 0 %} {% endif -%}{{ vars.ref_name }}
+{% if not loop.last %}
+.. rst-class:: classref-item-separator
+
+----
+{% endif -%}
 {% endfor %}
 {% endif %}
 
 {% if public_functions|length > 0 %}
+.. rst-class:: classref-section-separator
+
+----
+
 Methods Description
 -------------------
 
@@ -109,7 +125,11 @@ Methods Description
 {{ func.ref_type }}{% if func.ref_type|length > 0 %} {% endif -%}{{ func.ref_func }}
 {% for desc in func.detailed_description %}
 | {{ desc }}
-{%- endfor %}
+{% endfor %}
+{% if not loop.last -%}
+.. rst-class:: classref-item-separator
 
+----
+{% endif -%}
 {% endfor %}
 {% endif %}
