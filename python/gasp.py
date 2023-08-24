@@ -242,9 +242,9 @@ def main():
         default=""
     );
 
-    namespace = args.namespace + "::";
-
     args = parser.parse_args();
+
+    namespace = args.namespace + "::";
 
     xml_dir = Path(args.xml_dir);
     if xml_dir.is_file():
