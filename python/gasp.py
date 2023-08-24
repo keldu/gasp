@@ -242,6 +242,8 @@ def main():
         default=""
     );
 
+    namespace = args.namespace + "::";
+
     args = parser.parse_args();
 
     xml_dir = Path(args.xml_dir);
@@ -255,7 +257,7 @@ def main():
             if p.is_file():
                 xml_file = open(p, "r");
                 xml_text = xml_file.read();
-                convert_doxy_xml_to_class(class_tree,xml_text,args.namespace);
+                convert_doxy_xml_to_class(class_tree,xml_text,namespace);
 
     for cls_name,cls in class_tree.items():
         stripped_cls_name = strip_class_name_specialization(cls._name);
