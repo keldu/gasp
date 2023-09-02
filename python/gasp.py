@@ -10,6 +10,38 @@ import json
 from pathlib import Path
 
 
+class GaspFileDescription:
+    def __init__(self, f_id, f_name, attribs, funcs):
+        self._id = f_id;
+        self._name = f_name;
+        self._attributes = attribs;
+        self._functions = funcs;
+        pass
+
+    def gasp_to_json(self):
+        return {
+            "id" : self._id,
+            "name" : self._name,
+            "functions" : self._functions,
+            "attributes" : self._attributes
+        };
+
+class GaspNamespaceDescription:
+    def __init__(self, ns_id, ns_name, attribs, funcs):
+        self._id = ns_id;
+        self._name = ns_name;
+        self._attributes = attribs;
+        self._functions = funcs;
+        pass
+
+    def gasp_to_json(self):
+        return {
+            "id" : self._id,
+            "name" : self._name,
+            "functions" : self._functions,
+            "attributes" : self._attributes
+        };
+
 class GaspTypeRefDescription:
     def __init__(self, type_name, type_id):
         self._name = type_name;
@@ -23,31 +55,13 @@ class GaspTypeRefDescription:
         };
 
 class GaspAttributeDescription:
-    def __init__(self, type_name, member_id, name, brief_description, detailed_description):
-        self._type_name = type_name;
+    def __init__(self, member_id, name):
+        self._type_name = [];
         self._id = member_id;
         self._name = name;
-        self._brief_description = brief_description;
-        self._detailed_description = detailed_description;
-        pass
-
-    def gasp_to_json(self):
-        return {
-            "type" : self._type_name,
-            "id" : self._id,
-            "name" : self._name,
-            "brief_description" : self._brief_description,
-            "detailed_description" : self._detailed_description
-        };
-
-class GaspFunctionDescription:
-    def __init__(self, type_name, member_id, name, brief_description, detailed_description, params):
-        self._type_name = type_name;
-        self._id = member_id;
-        self._name = name;
-        self._brief_description = brief_description;
-        self._detailed_description = detailed_description;
-        self._params = params;
+        self._brief_description = "";
+        self._detailed_description = [];
+        self._static = False;
         pass
 
     def gasp_to_json(self):
@@ -57,24 +71,44 @@ class GaspFunctionDescription:
             "name" : self._name,
             "brief_description" : self._brief_description,
             "detailed_description" : self._detailed_description,
-            "parameters" : self._params
+            "static" : self._static
+        };
+
+class GaspFunctionDescription:
+    def __init__(self, member_id, name):
+        self._type_name = [];
+        self._id = member_id;
+        self._name = name;
+        self._brief_description = "";
+        self._detailed_description = [];
+        self._params = [];
+        self._static = False;
+        pass
+
+    def gasp_to_json(self):
+        return {
+            "type" : self._type_name,
+            "id" : self._id,
+            "name" : self._name,
+            "brief_description" : self._brief_description,
+            "detailed_description" : self._detailed_description,
+            "parameters" : self._params,
+            "static" : self._static
         };
 
 class GaspClassDescription:
-    def __init__(self, class_id, name, brief_description, detailed_description,
-                 private_attributes, public_attributes,
-                 private_functions, public_functions
+    def __init__(self, class_id, name,
+                 attributes,
+                 functions
     ):
         self._id = class_id;
         self._name = name;
-        self._brief_description = brief_description;
-        self._detailed_description = detailed_description;
+        self._brief_description = "";
+        self._detailed_description = [];
 
-        self._private_attributes = private_attributes;
-        self._public_attributes = public_attributes;
-        
-        self._private_functions = private_functions;
-        self._public_functions = public_functions;
+        self._attributes = attributes;
+        self._functions = functions;
+
         self._specializations = [];
         self._is_special = False;
         pass
@@ -89,15 +123,13 @@ class GaspClassDescription:
             "name" : self._name,
             "brief_description" : self._brief_description,
             "detailed_description" : self._detailed_description,
-            "private_attributes" : self._private_attributes,
-            "public_attributes" : self._public_attributes,
-            "private_functions" : self._private_functions,
-            "public_functions" : self._public_functions,
+            "attributes" : self._attributes,
+            "functions" : self._functions,
             "specializations" : self._specializations,
             "is_special" : self._is_special
         };
 
-def strip_class_name_specialization(name): 
+def strip_class_name_specialization(name):
     return ''.join(name.partition('<')[0:1]).rstrip();
 
 def is_class_name_specialization(name):
@@ -135,24 +167,29 @@ def convert_doxy_xml_section_to_attribs(member_section, members_attrib):
         mem_detail_desc = [];
         for para in memberdef.find('detaileddescription').findall('para'):
             mem_detail_desc.append(para.text);
-        members_attrib.append(GaspAttributeDescription(
-            type_name,
-            member_id,
-            name,
-            mem_brief_desc,
-            mem_detail_desc
-        ));
+        #endfor
+
+        members_attrib[member_id]._type_name = type_name;
+        members_attrib[member_id]._brief_description = mem_brief_desc;
+        members_attrib[member_id]._detailed_description = mem_detail_desc;
+        member_static = False;
+        if memberdef.attrib['static'] == "yes":
+            member_static = True;
+        #endif
+        members_attrib[member_id]._static = member_static;
+    #endfor
 
     pass
 def convert_doxy_xml_section_to_functions(member_section, members_func):
     for memberdef in member_section:
         type_name = convert_doxy_xml_type_to_type_tuple(memberdef.find('type'));
         member_id = memberdef.attrib["id"];
-        name = memberdef.find('name').text;
+
         mem_brief_desc = memberdef.find('briefdescription').text;
         mem_detail_desc = [];
         for para in memberdef.find('detaileddescription').findall('para'):
             mem_detail_desc.append(para.text);
+        #endfor
         params = [];
         for par in memberdef.findall('param'):
             declname = par.find('declname');
@@ -163,14 +200,18 @@ def convert_doxy_xml_section_to_functions(member_section, members_func):
                 "type" : convert_doxy_xml_type_to_type_tuple(par.find('type')),
                 "name" : declname_txt
             });
-        members_func.append(GaspFunctionDescription(
-            type_name,
-            member_id,
-            name,
-            mem_brief_desc,
-            mem_detail_desc,
-            params
-        ));
+        #endfor
+
+        members_func[member_id]._type_name = type_name;
+        members_func[member_id]._brief_description = mem_brief_desc;
+        members_func[member_id]._detailed_description = mem_detail_desc;
+        members_func[member_id]._params = params;
+        member_static = False;
+        if memberdef.attrib['static'] == "yes":
+            member_static = True;
+        #endif
+        members_func[member_id]._static = member_static;
+    #endfor
     pass
 
 def convert_doxy_xml_to_class(class_tree, xml_text, namespace):
@@ -180,53 +221,127 @@ def convert_doxy_xml_to_class(class_tree, xml_text, namespace):
 
     # Find the class id ( used for files/html/etc )
     compound_id = compound_class.attrib['id'];
-    # Find the class name 
-    compound_name = compound_class.find("compoundname");
 
     # Find the class descriptions
     class_brief_desc = compound_class.find("briefdescription");
-    class_detailed_desc = [];
+    class_tree._brief_description = class_brief_desc.text;
     for para in compound_class.find('detaileddescription').findall('para'):
-        class_detailed_desc.append(para.text);
-
-    # Find the members and sort them properly
-    members_priv_func = [];
-    members_pub_func = [];
-
-    members_priv_typedef = [];
-    members_pub_typedef = [];
-
-    members_priv_var = [];
-    members_pub_var = [];
+        class_tree._detailed_description.append(para.text);
 
     for section in compound_class.findall('sectiondef'):
-        if section.attrib['kind'] == 'private-attrib':
-            convert_doxy_xml_section_to_attribs(section.findall('memberdef'), members_priv_var);
-        elif section.attrib['kind'] == 'public-attrib':
-            convert_doxy_xml_section_to_attribs(section.findall('memberdef'), members_pub_var);
+        section_kind = section.attrib['kind'];
+        if section_kind == 'private-attrib' or section_kind == 'public-static-attrib' or section_kind == 'public-attrib' or section_kind == 'private-static-attrib':
+            convert_doxy_xml_section_to_attribs(section.findall('memberdef'), class_tree._attributes);
         elif section.attrib['kind'] == 'private-func':
-            convert_doxy_xml_section_to_functions(section.findall('memberdef'), members_priv_func);
+            convert_doxy_xml_section_to_functions(section.findall('memberdef'), class_tree._functions);
         elif section.attrib['kind'] == 'public-func':
-            convert_doxy_xml_section_to_functions(section.findall('memberdef'), members_pub_func);
-    # Strip the namespaced class name with the provided prefix
-    class_name = compound_name.text;
-    if class_name.startswith(namespace):
-        class_name = class_name[len(namespace):]
+            convert_doxy_xml_section_to_functions(section.findall('memberdef'), class_tree._functions);
 
-    # Add the class to the class tree
-    gasp_class = GaspClassDescription(
-            compound_id,
-            class_name,
-            class_brief_desc.text,
-            class_detailed_desc,
-            members_priv_var,
-            members_pub_var,
-            members_priv_func,
-            members_pub_func
-    );
+    pass
 
-    class_tree[compound_id] = gasp_class;
+def convert_doxy_index_xml_to_index(xml_text, doxy_tree, namespace):
+    doxy_index_root = ET.fromstring(xml_text);
+    for compound in doxy_index_root.findall('compound'):
+        compound_kind = compound.attrib['kind'];
+        compound_id = compound.attrib['refid'];
+        compound_name = compound.find('name').text;
+        if compound_kind == 'class' or compound_kind == 'struct':
+            attribs = {};
+            funcs = {};
 
+            for member in compound.findall('member'):
+                member_kind = member.attrib['kind'];
+                member_id = member.attrib['refid'];
+                member_name = member.find('name').text;
+                if member_kind == 'function':
+                    gasp_func = GaspFunctionDescription(
+                        member_id,
+                        member_name
+                    );
+                    funcs[member_id] = gasp_func;
+                elif member_kind == 'variable':
+                    gasp_attrib = GaspAttributeDescription(
+                        member_id,
+                        member_name
+                    );
+                    attribs[member_id] = gasp_attrib;
+                #endif
+            #endfor
+            # Strip the namespaced class name with the provided prefix
+            class_name = compound_name;
+            if class_name.startswith(namespace):
+                class_name = class_name[len(namespace):]
+            #endif
+
+            gasp_class = GaspClassDescription(
+                compound_id,
+                class_name,
+                attribs,
+                funcs
+            );
+            doxy_tree['classes'][compound_id] = gasp_class;
+        elif compound_kind == 'namespace':
+            attribs = {};
+            funcs = {};
+
+            for member in compound.findall('member'):
+                member_kind = member.attrib['kind'];
+                member_id = member.attrib['refid'];
+                member_name = member.find('name').text;
+
+                if member_kind == 'function':
+                    gasp_func = GaspFunctionDescription(
+                        member_id,
+                        member_name
+                    );
+                    funcs[member_id] = gasp_func;
+                elif member_kind == 'variable':
+                    gasp_attrib = GaspAttributeDescription(
+                        member_id,
+                        member_name
+                    );
+                    attribs[member_id] = gasp_attrib;
+                #endif
+            #endfor
+            gasp_namespace = GaspNamespaceDescription(
+                compound_id,
+                compound_name,
+                attribs,
+                funcs
+            );
+            doxy_tree['namespaces'][compound_id] = gasp_namespace;
+        elif compound_kind == 'file':
+            attribs = {};
+            funcs = {};
+
+            for member in compound.findall('member'):
+                member_kind = member.attrib['kind'];
+                member_id = member.attrib['refid'];
+                member_name = member.find('name').text;
+
+                if member_kind == 'function':
+                    gasp_func = GaspFunctionDescription(
+                        member_id,
+                        member_name
+                    );
+                    funcs[member_id] = gasp_func;
+                elif member_kind == 'variable':
+                    gasp_attrib = GaspAttributeDescription(
+                        member_id,
+                        member_name
+                    );
+                    attribs[member_id] = gasp_attrib;
+                #endif
+            #endfor
+            gasp_file = GaspFileDescription(
+                compound_id,
+                compound_name,
+                attribs,
+                funcs
+            );
+            doxy_tree['files']['compound_id'] = gasp_file;
+        #endif
+    #endfor
     pass
 
 def main():
@@ -250,31 +365,58 @@ def main():
     if xml_dir.is_file():
         print("XML dir path is not a dir");
         exit(-1);
+    #endif
 
-    class_tree = {};
-    for p in xml_dir.iterdir():
-        if p.name.startswith('class'):
-            if p.is_file():
-                xml_file = open(p, "r");
-                xml_text = xml_file.read();
-                convert_doxy_xml_to_class(class_tree,xml_text,namespace);
+    doxy_tree = {
+        "classes" : {},
+        "namespaces" : {},
+        "files" : {}
+    };
 
-    for cls_name,cls in class_tree.items():
+    index_path = xml_dir/"index.xml";
+    if index_path.is_file():
+        index_xml_file = open(index_path, "r");
+        xml_index_text = index_xml_file.read();
+        convert_doxy_index_xml_to_index(xml_index_text, doxy_tree, namespace);
+    else:
+        print("XML Index file doesn't exist");
+        exit(-1);
+    #endif
+    
+    for cls_key,cls in doxy_tree['classes'].items():
+        cls_file_name = cls._id + ".xml";
+        p = xml_dir/cls_file_name;
+        if p.is_file():
+            cls_xml_file = open(p, "r");
+            cls_xml_text = cls_xml_file.read();
+            convert_doxy_xml_to_class(cls,cls_xml_text,namespace);
+        else:
+            print("Class file is missing");
+            exit(-1);
+        #endif
+    #endfor
+
+    for key,cls in doxy_tree["classes"].items():
         stripped_cls_name = strip_class_name_specialization(cls._name);
         if stripped_cls_name != cls._name:
             cls._is_special = True;
             stripped_ids = [];
-            for k,v in class_tree.items():
+            for k,v in doxy_tree["classes"].items():
                 if v._name == stripped_cls_name:
                     stripped_ids.append(k);
+                #endif
+            #endfor
             if len(stripped_ids) != 1:
-                print("Panic. This is supposed to be a unique name which exists exactly once. Name: " + stripped_cls_name);
+                print("Panic. This is supposed to be a unique name which exists exactly once. Name: " + stripped_cls_name + "\nMatching IDs: " + json.dumps(stripped_ids, indent=2));
                 exit(-1);
-            class_tree[stripped_ids[0]].append_specialization(cls_name, class_tree[cls_name]._id);
+            #endif
+            doxy_tree["classes"][stripped_ids[0]].append_specialization(cls._name, key);
+        #endif
+    #endfor
 
-    print(json.dumps(class_tree,indent=2,cls=GaspEncoder));
-
+    print(json.dumps(doxy_tree,indent=2,cls=GaspEncoder));
     pass
 
 if __name__ == "__main__":
     main();
+#endif

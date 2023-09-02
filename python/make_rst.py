@@ -44,8 +44,8 @@ def main():
     };
 
     out_dir = Path(args.output);
-    for k,v in var_map.items():
-        out_name = v["id"]+".rst";
+    for k,v in var_map["classes"].items():
+        out_name = k+".rst";
         out_file = out_dir / out_name;
         v["specializations"] = sorted(v["specializations"], key=lambda k: k["name"]);
         with open(out_file, "w") as f:
@@ -53,9 +53,9 @@ def main():
             written_files["classes"].append({
                 "id" : v["id"],
                 "name" : v["name"],
-                "is_special" : v["is_special"] 
+                "is_special" : v["is_special"]
             });
-    
+
     out_index = out_dir / "index.rst";
     template_index = read_template(template_dir/"index.rst.tmpl");
     written_files["classes"] = sorted(written_files["classes"], key=lambda k: k["name"]);

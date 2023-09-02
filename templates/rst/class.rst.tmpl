@@ -1,12 +1,12 @@
-:github_url: hide  
+:github_url: hide
 
 .. _{{ id }}:
 
-{{ name }}  
-{% for i in name %}={%- endfor %}  
+{{ name }}
+{% for i in name %}={%- endfor %}
 
-Description  
------------  
+Description
+-----------
 
 {% for desc in detailed_description %}
 {{ desc }}
@@ -23,53 +23,57 @@ Specializations
 {% for spec in specializations %}
 		{{ spec.id }}{% endfor %}
 {% endif %}
-{% if private_attributes|length > 0 %}
+{% if attributes|length > 0 %}
 .. rst-class:: classref-reftable-group
 
 Vars
 ----
 
-{%- for vars in private_attributes -%}
-{% set ref_name = ':ref:`'+vars.name + '<' + vars.id + '>`' %}
-{{ vars.update({"ref_name":ref_name}) or "" }}
+{%- set ref_name_lens = [] -%}
+{%- set ref_type_lens = [] -%}
+{%- set ref_default_lens = [] -%}
+{%- for aid,vars in attributes.items() -%}
+{% set ref_name = ':ref:`'+vars.name + '<' + vars.id + '>`' %}{{ ref_name_lens.append(ref_name|length) or "" }}{{ vars.update({"ref_name":ref_name}) or "" }}
 {%- set ref_type_tuple = [] -%}
+{%- if vars.static -%}
+{{ ref_type_tuple.append("**static**") or "" }}
+{%- endif -%}
 {%- for type_ele in vars.type -%}
 {%- if type_ele is string -%}{{ ref_type_tuple.append(type_ele) or "" }}
 {%- else -%}
 {%- set ele_ref_type = ':ref:`'+ type_ele.name + '<' + type_ele.id + '>`' -%}{{ ref_type_tuple.append(ele_ref_type) or "" }}{%- endif -%}
 {%- endfor -%}
-{% set ref_type = " ".join(ref_type_tuple) %}
-{{ vars.update({"ref_type":ref_type}) or "" }}
+{% set ref_type = " ".join(ref_type_tuple) %}{{ ref_type_lens.append(ref_type|length) or "" }}{{ vars.update({"ref_type":ref_type}) or "" }}
 {%- endfor -%}
-{% set str_type_max_len = private_attributes|map(attribute="ref_type")|map('count')|max -%}
-{%- set str_name_max_len = private_attributes|map(attribute="ref_name")|map('count')|max -%}
-{%- for vars in private_attributes %}
+{% set str_type_max_len = ref_type_lens|max -%}
+{%- set str_name_max_len = ref_name_lens|max -%}
+{%- for aid,vars in attributes.items() %}
 +-{%- for i in range(str_type_max_len) -%}-{%- endfor %}-+-{%- for i in range(str_name_max_len) -%}-{% endfor %}-+
 + {{ "{0}".format(vars.ref_type).ljust(str_type_max_len) }} | {{ "{0}".format(vars.ref_name).ljust(str_name_max_len) }} |
 {%- endfor -%}
-{%- if private_attributes|length > 0 %}
+{%- if attributes|length > 0 %}
 +-{%- for i in range(str_type_max_len) -%}-{%- endfor %}-+-{%- for i in range(str_name_max_len) -%}-{% endfor %}-+
 {%- endif %}
 {% endif %}
 
-{% if public_functions|length > 0 %}
+{% if functions|length > 0 %}
 .. rst-class:: classref-reftable-group
 
-Methods  
--------  
+Methods
+-------
 
-{%- for func in public_functions -%}
-{% set ref_name = ':ref:`'+func.name + '<' + func.id + '>`' %}
+{%- set ref_name_lens = [] -%}
+{%- set ref_type_lens = [] -%}
+{%- for fid,func in functions.items() -%}
+{% set ref_name = ':ref:`'+func.name + '<' + func.id + '>`' %}{{ func.update({"ref_name":ref_name}) or "" }}
 {%- set ref_func_tuple = [] -%}
-{{ func.update({"ref_name":ref_name}) or "" }}
 {%- set ref_type_tuple = [] -%}
 {%- for type_ele in func.type -%}
 {%- if type_ele is string -%}{{ ref_type_tuple.append(type_ele) or "" }}
 {%- else -%}
 {%- set ele_ref_type = ':ref:`'+ type_ele.name + '<' + type_ele.id + '>`' -%}{{ ref_type_tuple.append(ele_ref_type) or "" }}{%- endif -%}
 {%- endfor -%}
-{% set ref_type = " ".join(ref_type_tuple) %}
-{{ func.update({"ref_type":ref_type}) or "" }}
+{% set ref_type = " ".join(ref_type_tuple) %}{{ ref_type_lens.append(ref_type|length) or "" }}{{ func.update({"ref_type":ref_type}) or "" }}
 {%- for param in func.parameters -%}
 {%- set ref_param_type_tuple = [] -%}
 {%- for param_type_ele in param.type -%}
@@ -80,20 +84,20 @@ Methods
 {%- set param_ref_type = " ".join(ref_param_type_tuple) -%}{{ param.update({"ref_type":param_ref_type }) or "" }}{{ ref_func_tuple.append(param_ref_type) or "" }}
 {%- endfor -%}
 {%- set ref_func_param = ", ".join(ref_func_tuple) -%}
-{%- set ref_func = ref_name + " **(** " + ref_func_param + " **)**" -%}{{ func.update({"ref_func":ref_func}) or "" }}
+{%- set ref_func = ref_name + " **(** " + ref_func_param + " **)**" -%}{{ ref_name_lens.append(ref_func|length) or "" }}{{ func.update({"ref_func":ref_func}) or "" }}
 {%- endfor -%}
-{% set str_type_max_len = public_functions|map(attribute="ref_type")|map('count')|max -%}
-{%- set str_name_max_len = public_functions|map(attribute="ref_func")|map('count')|max -%}
-{%- for func in public_functions %}
+{% set str_type_max_len = ref_type_lens|max -%}
+{%- set str_name_max_len = ref_name_lens|max -%}
+{%- for fid,func in functions.items() %}
 +-{%- for i in range(str_type_max_len) -%}-{%- endfor %}-+-{%- for i in range(str_name_max_len) -%}-{% endfor %}-+
 + {{ "{0}".format(func.ref_type).ljust(str_type_max_len) }} | {{ "{0}".format(func.ref_func).ljust(str_name_max_len) }} |
 {%- endfor -%}
-{%- if public_functions|length > 0 %}
+{%- if functions|length > 0 %}
 +-{%- for i in range(str_type_max_len) -%}-{%- endfor %}-+-{%- for i in range(str_name_max_len) -%}-{% endfor %}-+
 {%- endif %}
 {% endif %}
 
-{% if private_attributes|length > 0 %}
+{% if attributes|length > 0 %}
 .. rst-class:: classref-section-separator
 
 ----
@@ -101,9 +105,12 @@ Methods
 Vars Description
 ----------------
 
-{%- for vars in private_attributes %}
+{%- for aid,vars in attributes.items() %}
 .. _{{ vars.id }}:
 {{ vars.ref_type }}{% if vars.ref_type|length > 0 %} {% endif -%}{{ vars.ref_name }}
+{% for desc in vars.detailed_description %}
+| {{ desc }}
+{% endfor %}
 {% if not loop.last %}
 .. rst-class:: classref-item-separator
 
@@ -112,7 +119,7 @@ Vars Description
 {% endfor %}
 {% endif %}
 
-{% if public_functions|length > 0 %}
+{% if functions|length > 0 %}
 .. rst-class:: classref-section-separator
 
 ----
@@ -120,7 +127,7 @@ Vars Description
 Methods Description
 -------------------
 
-{%- for func in public_functions %}
+{%- for fid,func in functions.items() %}
 .. _{{ func.id }}:
 {{ func.ref_type }}{% if func.ref_type|length > 0 %} {% endif -%}{{ func.ref_func }}
 {% for desc in func.detailed_description %}
