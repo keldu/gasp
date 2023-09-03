@@ -1,10 +1,18 @@
-C++ API Reference
-=================
-
+{{ title }}
+{% for t in title %}={% endfor %}
+{% if classes|length > 0 %}
 .. toctree::
 		:maxdepth: 1
-		:caption: C++ API Reference
+		:caption: Class Reference
 		:name: toc-class-ref
-
 {% for class in classes %}{% if not class.is_special %}
 		{{ class.id }}{% endif %}{% endfor %}
+{% endif %}
+{% if functions|length > 0 %}
+.. toctree::
+		:maxdepth: 1
+		:caption: Global Functions
+		:name: toc-globals-ref
+{% for fun in functions %}
+		{{ fun.id }}{% endfor %}
+{% endif %}

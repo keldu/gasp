@@ -22,10 +22,17 @@ stdenvNoCC.mkDerivation {
   ];
 
   buildPhase = ''
-    doxygen Doxygen.in
-    python3 ${gasp.outPath}/bin/gasp.py doxygen/xml --namespace duke > map.json
-    mkdir -p source/api
-    python3 ${gasp.outPath}/bin/make_rst.py -t ${gasp.outPath}/templates/rst -m map.json -o source/api
+    # C++ API generation
+    doxygen Doxyfile_cpp
+    python3 ${gasp.outPath}/bin/gasp.py doxygen_cpp/xml --namespace duke > cpp_map.json
+    # C API generation
+    doxygen Doxyfile_c
+    python3 ${gasp.outPath}/bin/gasp.py doxygen_c/xml > c_map.json
+    # Ensure file tree exists in source
+    mkdir -p source/cpp_api source/c_api
+    # C++ and C template generation
+    python3 ${gasp.outPath}/bin/make_rst.py --title="C++" -t ${gasp.outPath}/templates/rst -m cpp_map.json -o source/cpp_api
+    python3 ${gasp.outPath}/bin/make_rst.py --title="C" -t ${gasp.outPath}/templates/rst -m c_map.json -o source/c_api
     make html
   '';
 

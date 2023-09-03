@@ -9,6 +9,14 @@ Welcome to Gasp Example's documentation!
 .. toctree::
    :hidden:
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Manual
 
-   api/index
+   manual/introduction
+
+.. toctree::
+   :hidden:
+   :maxdepth: 2
+   :caption: API Reference
+
+   c_api/index
+   cpp_api/index

@@ -270,19 +270,19 @@ def convert_doxy_index_xml_to_index(xml_text, doxy_tree, namespace):
             # Strip the namespaced class name with the provided prefix
             class_name = compound_name;
             if class_name.startswith(namespace):
-                class_name = class_name[len(namespace):]
-            #endif
+                class_name = class_name[len(namespace):];
 
-            gasp_class = GaspClassDescription(
-                compound_id,
-                class_name,
-                attribs,
-                funcs
-            );
-            doxy_tree['classes'][compound_id] = gasp_class;
-        elif compound_kind == 'namespace':
-            attribs = {};
-            funcs = {};
+                gasp_class = GaspClassDescription(
+                    compound_id,
+                    class_name,
+                    attribs,
+                    funcs
+                );
+                doxy_tree['classes'][compound_id] = gasp_class;
+            #endif
+        elif compound_kind == 'namespace' and compound_name.startswith(doxy_tree['namespace_filter']):
+            attribs = [];
+            funcs = [];
 
             for member in compound.findall('member'):
                 member_kind = member.attrib['kind'];
@@ -294,13 +294,15 @@ def convert_doxy_index_xml_to_index(xml_text, doxy_tree, namespace):
                         member_id,
                         member_name
                     );
-                    funcs[member_id] = gasp_func;
+                    funcs.append(member_id);
+                    doxy_tree['functions'][member_id] = gasp_func;
                 elif member_kind == 'variable':
                     gasp_attrib = GaspAttributeDescription(
                         member_id,
                         member_name
                     );
-                    attribs[member_id] = gasp_attrib;
+                    attribs.append(member_id);
+                    doxy_tree['attributes'][member_id] = gasp_attrib;
                 #endif
             #endfor
             gasp_namespace = GaspNamespaceDescription(
@@ -310,9 +312,9 @@ def convert_doxy_index_xml_to_index(xml_text, doxy_tree, namespace):
                 funcs
             );
             doxy_tree['namespaces'][compound_id] = gasp_namespace;
-        elif compound_kind == 'file':
-            attribs = {};
-            funcs = {};
+        elif compound_kind == 'file' and len(doxy_tree['namespace_filter']) == 0:
+            attribs = [];
+            funcs = [];
 
             for member in compound.findall('member'):
                 member_kind = member.attrib['kind'];
@@ -324,13 +326,15 @@ def convert_doxy_index_xml_to_index(xml_text, doxy_tree, namespace):
                         member_id,
                         member_name
                     );
-                    funcs[member_id] = gasp_func;
+                    funcs.append(member_id);
+                    doxy_tree['functions'][member_id] = gasp_func;
                 elif member_kind == 'variable':
                     gasp_attrib = GaspAttributeDescription(
                         member_id,
                         member_name
                     );
-                    attribs[member_id] = gasp_attrib;
+                    attribs.append(member_id);
+                    doxy_tree['attributes'][member_id] = gasp_attrib;
                 #endif
             #endfor
             gasp_file = GaspFileDescription(
@@ -360,6 +364,8 @@ def main():
     args = parser.parse_args();
 
     namespace = args.namespace + "::";
+    if len(args.namespace) == 0:
+        namespace = "";
 
     xml_dir = Path(args.xml_dir);
     if xml_dir.is_file():
@@ -368,7 +374,10 @@ def main():
     #endif
 
     doxy_tree = {
+        "namespace_filter" : args.namespace,
         "classes" : {},
+        "functions" : {},
+        "attributes" : {},
         "namespaces" : {},
         "files" : {}
     };
@@ -412,6 +421,16 @@ def main():
             #endif
             doxy_tree["classes"][stripped_ids[0]].append_specialization(cls._name, key);
         #endif
+    #endfor
+
+    for key, ns in doxy_tree["namespaces"].items():
+        ns_file_name = ns._id + ".xml";
+        p = xml_dir/ns_file_name;
+        if p.is_file():
+            ns_xml_file = open(p, "r");
+            ns_xml_text = ns_xml_file.read();
+        else:
+            print("Namespace file is missing");
     #endfor
 
     print(json.dumps(doxy_tree,indent=2,cls=GaspEncoder));

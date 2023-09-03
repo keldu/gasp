@@ -18,6 +18,10 @@ def parse_args():
     parser.add_argument(
         '-o', '--output', required=True,
         help='path to the output dir')
+    parser.add_argument(
+        '--title', default="C++ API Reference",
+        help='The title of the index for the API'
+    );
 
     return parser.parse_args()
 
@@ -29,7 +33,8 @@ def read_template(path):
 
 def read_var_map(path):
     with open(path, "r") as f:
-        return json.loads(f.read())
+        return json.loads(f.read());
+    #endwith
 
 
 def main():
@@ -39,9 +44,7 @@ def main():
     template = read_template(template_dir/"class.rst.tmpl");
     var_map = read_var_map(args.map);
 
-    written_files = {
-        "classes" : []
-    };
+    var_map['title'] = args.title;
 
     out_dir = Path(args.output);
     for k,v in var_map["classes"].items():
@@ -50,18 +53,15 @@ def main():
         v["specializations"] = sorted(v["specializations"], key=lambda k: k["name"]);
         with open(out_file, "w") as f:
             f.write(template.render(v));
-            written_files["classes"].append({
-                "id" : v["id"],
-                "name" : v["name"],
-                "is_special" : v["is_special"]
-            });
 
     out_index = out_dir / "index.rst";
     template_index = read_template(template_dir/"index.rst.tmpl");
-    written_files["classes"] = sorted(written_files["classes"], key=lambda k: k["name"]);
+    var_map["classes"] = dict(sorted(var_map["classes"].items(), key=lambda k: k[1]["name"]));
     with open(out_index, "w") as f:
-        f.write(template_index.render(written_files));
+        f.write(template_index.render(var_map));
     pass
+
+    print(json.dumps(var_map,indent=2));
 
 if __name__ == "__main__":
     main();
