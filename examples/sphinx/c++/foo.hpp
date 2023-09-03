@@ -54,5 +54,8 @@ public:
 		}
 };
 
-
+/**
+ * Global function inside a namespace
+ */
+void chicken();
 }

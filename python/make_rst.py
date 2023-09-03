@@ -67,7 +67,6 @@ def main():
     var_map["classes"] = dict(sorted(var_map["classes"].items(), key=lambda k: k[1]["name"]));
     with open(out_index, "w") as f:
         f.write(template_index.render(var_map));
-    print(json.dumps(var_map, indent=2));
     pass
 
 if __name__ == "__main__":

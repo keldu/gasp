@@ -239,6 +239,38 @@ def convert_doxy_xml_to_class(class_tree, xml_text, namespace):
 
     pass
 
+def convert_doxy_file_to_file(doxy_tree, xml_text, namespace):
+    doxy_file_root = ET.fromstring(xml_text);
+    
+    compound_file = doxy_file_root.find("compounddef");
+
+    compound_id = compound_file.attrib['id'];
+
+    for section in compound_file.findall('sectiondef'):
+        section_kind = section.attrib['kind'];
+        if section_kind == "var":
+            convert_doxy_xml_section_to_attribs(section.findall('memberdef'), doxy_tree["attributes"]);
+        elif section_kind == "func":
+            convert_doxy_xml_section_to_functions(section.findall('memberdef'), doxy_tree["functions"]);
+        #endif
+    pass
+
+def convert_doxy_namespace_to_namespace(doxy_tree, xml_text, namespace):
+    doxy_file_root = ET.fromstring(xml_text);
+    
+    compound_file = doxy_file_root.find("compounddef");
+
+    compound_id = compound_file.attrib['id'];
+
+    for section in compound_file.findall('sectiondef'):
+        section_kind = section.attrib['kind'];
+        if section_kind == "var":
+            convert_doxy_xml_section_to_attribs(section.findall('memberdef'), doxy_tree["attributes"]);
+        elif section_kind == "func":
+            convert_doxy_xml_section_to_functions(section.findall('memberdef'), doxy_tree["functions"]);
+        #endif
+    pass
+
 def convert_doxy_index_xml_to_index(xml_text, doxy_tree, namespace):
     doxy_index_root = ET.fromstring(xml_text);
     for compound in doxy_index_root.findall('compound'):
@@ -343,7 +375,7 @@ def convert_doxy_index_xml_to_index(xml_text, doxy_tree, namespace):
                 attribs,
                 funcs
             );
-            doxy_tree['files']['compound_id'] = gasp_file;
+            doxy_tree['files'][compound_id] = gasp_file;
         #endif
     #endfor
     pass
@@ -429,8 +461,19 @@ def main():
         if p.is_file():
             ns_xml_file = open(p, "r");
             ns_xml_text = ns_xml_file.read();
+            convert_doxy_namespace_to_namespace(doxy_tree, ns_xml_text, namespace);
         else:
             print("Namespace file is missing");
+            exit(-1);
+    #endfor
+
+    for key,file in doxy_tree["files"].items():
+        f_file_name = file._id + ".xml";
+        p = xml_dir/f_file_name;
+        if p.is_file():
+            f_xml_file = open(p, "r");
+            f_xml_text = f_xml_file.read();
+            convert_doxy_file_to_file(doxy_tree, f_xml_text, namespace);
     #endfor
 
     print(json.dumps(doxy_tree,indent=2,cls=GaspEncoder));
