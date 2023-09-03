@@ -53,15 +53,22 @@ def main():
         v["specializations"] = sorted(v["specializations"], key=lambda k: k["name"]);
         with open(out_file, "w") as f:
             f.write(template.render(v));
+        #endwith
+    #endfor
+
+    out_globs = out_dir / "globals.rst";
+    template_globs = read_template(template_dir/"globals.rst.tmpl");
+    with open(out_globs, "w") as f:
+        f.write(template_globs.render(var_map));
+    #endwith
 
     out_index = out_dir / "index.rst";
     template_index = read_template(template_dir/"index.rst.tmpl");
     var_map["classes"] = dict(sorted(var_map["classes"].items(), key=lambda k: k[1]["name"]));
     with open(out_index, "w") as f:
         f.write(template_index.render(var_map));
+    print(json.dumps(var_map, indent=2));
     pass
-
-    print(json.dumps(var_map,indent=2));
 
 if __name__ == "__main__":
     main();

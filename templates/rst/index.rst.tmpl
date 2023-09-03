@@ -5,14 +5,14 @@
 		:maxdepth: 1
 		:caption: Class Reference
 		:name: toc-class-ref
-{% for class in classes %}{% if not class.is_special %}
-		{{ class.id }}{% endif %}{% endfor %}
+{% for class_id,class in classes.items() %}{% if not class.is_special %}
+		{{ class_id }}{% endif %}{% endfor %}
 {% endif %}
 {% if functions|length > 0 %}
 .. toctree::
 		:maxdepth: 1
 		:caption: Global Functions
 		:name: toc-globals-ref
-{% for fun in functions %}
-		{{ fun.id }}{% endfor %}
+
+		globals
 {% endif %}
