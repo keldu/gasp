@@ -61,6 +61,7 @@ class GaspAttributeDescription:
         self._name = name;
         self._brief_description = "";
         self._detailed_description = [];
+        self._const = False;
         self._static = False;
         self._initializer = "";
         pass
@@ -73,6 +74,7 @@ class GaspAttributeDescription:
             "brief_description" : self._brief_description,
             "detailed_description" : self._detailed_description,
             "static" : self._static,
+            "const" : self._const,
             "initializer" : self._initializer
         };
 
@@ -84,7 +86,9 @@ class GaspFunctionDescription:
         self._brief_description = "";
         self._detailed_description = [];
         self._params = [];
+        self._const = False;
         self._static = False;
+        self._virtual = False;
         pass
 
     def gasp_to_json(self):
@@ -95,7 +99,9 @@ class GaspFunctionDescription:
             "brief_description" : self._brief_description,
             "detailed_description" : self._detailed_description,
             "parameters" : self._params,
-            "static" : self._static
+            "static" : self._static,
+            "const" : self._const,
+            "virtual" : self._virtual
         };
 
 class GaspClassDescription:
@@ -113,6 +119,8 @@ class GaspClassDescription:
 
         self._specializations = [];
         self._is_special = False;
+
+        self._templates = [];
         pass
 
     def append_specialization(self, name, cls_id):
@@ -129,7 +137,8 @@ class GaspClassDescription:
             "attributes" : self._attributes,
             "functions" : self._functions,
             "specializations" : self._specializations,
-            "is_special" : self._is_special
+            "is_special" : self._is_special,
+            "templates" : self._templates
         };
 
 def strip_class_name_specialization(name):
