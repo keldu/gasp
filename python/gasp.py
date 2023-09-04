@@ -62,6 +62,7 @@ class GaspAttributeDescription:
         self._brief_description = "";
         self._detailed_description = [];
         self._static = False;
+        self._initializer = "";
         pass
 
     def gasp_to_json(self):
@@ -71,7 +72,8 @@ class GaspAttributeDescription:
             "name" : self._name,
             "brief_description" : self._brief_description,
             "detailed_description" : self._detailed_description,
-            "static" : self._static
+            "static" : self._static,
+            "initializer" : self._initializer
         };
 
 class GaspFunctionDescription:
@@ -116,6 +118,7 @@ class GaspClassDescription:
     def append_specialization(self, name, cls_id):
         self._specializations.append({"name" : name, "id" : cls_id});
         pass
+
 
     def gasp_to_json(self):
         return {
@@ -177,6 +180,14 @@ def convert_doxy_xml_section_to_attribs(member_section, members_attrib):
             member_static = True;
         #endif
         members_attrib[member_id]._static = member_static;
+        member_init = memberdef.find('initializer');
+        if member_init is not None:
+            init_text = member_init.text.strip();
+            if init_text.startswith('='):
+                init_text = init_text[1:].lstrip();
+            #endif
+            members_attrib[member_id]._initializer = init_text;
+        #endif
     #endfor
 
     pass

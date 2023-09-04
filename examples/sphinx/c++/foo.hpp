@@ -42,7 +42,8 @@ public:
 		/**
 		 * Something you should do
 		 */
-		float touch_grass() const {
+		float touch_grass( int x) const {
+				(void) x;
 				return 5.f;
 		}
 

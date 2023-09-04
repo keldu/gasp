@@ -33,7 +33,7 @@ Vars
 {%- set ref_type_lens = [] -%}
 {%- set ref_default_lens = [] -%}
 {%- for aid,vars in attributes.items() -%}
-{% set ref_name = ':ref:`'+vars.name + '<' + vars.id + '>`' %}{{ ref_name_lens.append(ref_name|length) or "" }}{{ vars.update({"ref_name":ref_name}) or "" }}
+{% set ref_name = ':ref:`'+vars.name + '<' + vars.id + '>`' %}{{ ref_name_lens.append(ref_name|length) or "" }}{{ vars.update({"ref_name":ref_name}) or "" }}{{ ref_default_lens.append(vars.initializer|length) or "" }}
 {%- set ref_type_tuple = [] -%}
 {%- if vars.static -%}
 {{ ref_type_tuple.append("**static**") or "" }}
@@ -47,12 +47,13 @@ Vars
 {%- endfor -%}
 {% set str_type_max_len = ref_type_lens|max -%}
 {%- set str_name_max_len = ref_name_lens|max -%}
+{%- set str_default_max_len = ref_default_lens|max -%}
 {%- for aid,vars in attributes.items() %}
-+-{%- for i in range(str_type_max_len) -%}-{%- endfor %}-+-{%- for i in range(str_name_max_len) -%}-{% endfor %}-+
-+ {{ "{0}".format(vars.ref_type).ljust(str_type_max_len) }} | {{ "{0}".format(vars.ref_name).ljust(str_name_max_len) }} |
++-{%- for i in range(str_type_max_len) -%}-{%- endfor %}-+-{%- for i in range(str_name_max_len) -%}-{% endfor %}-+-{%- for i in range(str_default_max_len) -%}-{%- endfor -%}-+
++ {{ "{0}".format(vars.ref_type).ljust(str_type_max_len) }} | {{ "{0}".format(vars.ref_name).ljust(str_name_max_len) }} | {{ "{0}".format(vars.initializer).ljust(str_default_max_len) }} |
 {%- endfor -%}
 {%- if attributes|length > 0 %}
-+-{%- for i in range(str_type_max_len) -%}-{%- endfor %}-+-{%- for i in range(str_name_max_len) -%}-{% endfor %}-+
++-{%- for i in range(str_type_max_len) -%}-{%- endfor %}-+-{%- for i in range(str_name_max_len) -%}-{% endfor %}-+-{%- for i in range(str_default_max_len) -%}-{%- endfor -%}-+
 {%- endif %}
 {% endif %}
 

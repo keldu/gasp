@@ -9,3 +9,8 @@ extern void foo();
  * Eat chicken. Don't call this if you don't eat chicken
  */
 extern void eat_chicken();
+
+/**
+ * A global variable
+ */
+static int banana = 5;
