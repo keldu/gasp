@@ -39,9 +39,9 @@ Vars
 {{ ref_type_tuple.append("**static**") or "" }}
 {%- endif -%}
 {%- for type_ele in vars.type -%}
-{%- if type_ele is string -%}{{ ref_type_tuple.append(type_ele) or "" }}
+{%- if type_ele is string -%}{{ ref_type_tuple.append(type_ele|replace("*","\*")) or "" }}
 {%- else -%}
-{%- set ele_ref_type = ':ref:`'+ type_ele.name + '<' + type_ele.id + '>`' -%}{{ ref_type_tuple.append(ele_ref_type) or "" }}{%- endif -%}
+{%- set ele_ref_type = ':ref:`'+ type_ele.name + '<' + type_ele.id + '>`' -%}{{ ref_type_tuple.append(ele_ref_type|replace("*","\*")) or "" }}{%- endif -%}
 {%- endfor -%}
 {% set ref_type = " ".join(ref_type_tuple) %}{{ ref_type_lens.append(ref_type|length) or "" }}{{ vars.update({"ref_type":ref_type}) or "" }}
 {%- endfor -%}
@@ -70,19 +70,19 @@ Methods
 {%- set ref_func_tuple = [] -%}
 {%- set ref_type_tuple = [] -%}
 {%- for type_ele in func.type -%}
-{%- if type_ele is string -%}{{ ref_type_tuple.append(type_ele) or "" }}
+{%- if type_ele is string -%}{{ ref_type_tuple.append(type_ele|replace("*","\*")) or "" }}
 {%- else -%}
-{%- set ele_ref_type = ':ref:`'+ type_ele.name + '<' + type_ele.id + '>`' -%}{{ ref_type_tuple.append(ele_ref_type) or "" }}{%- endif -%}
+{%- set ele_ref_type = ':ref:`'+ type_ele.name + '<' + type_ele.id + '>`' -%}{{ ref_type_tuple.append(ele_ref_type|replace("*","\*")) or "" }}{%- endif -%}
 {%- endfor -%}
 {% set ref_type = " ".join(ref_type_tuple) %}{{ ref_type_lens.append(ref_type|length) or "" }}{{ func.update({"ref_type":ref_type}) or "" }}
 {%- for param in func.parameters -%}
 {%- set ref_param_type_tuple = [] -%}
 {%- for param_type_ele in param.type -%}
-{%- if param_type_ele is string -%}{{ ref_param_type_tuple.append(param_type_ele) or "" }}
+{%- if param_type_ele is string -%}{{ ref_param_type_tuple.append(param_type_ele|replace("*","\*")) or "" }}
 {%- else -%}
-{%- set ele_param_ref_type = ':ref:`'+ param_type_ele.name + '<' + param_type_ele.id + '>`' -%}{{ ref_param_type_tuple.append(ele_param_ref_type) or "" }}{%- endif -%}
+{%- set ele_param_ref_type = ':ref:`'+ param_type_ele.name + '<' + param_type_ele.id + '>`' -%}{{ ref_param_type_tuple.append(ele_param_ref_type|replace("*","\*")) or "" }}{%- endif -%}
 {%- endfor -%}
-{%- set param_ref_type = " ".join(ref_param_type_tuple) -%}{{ param.update({"ref_type":param_ref_type }) or "" }}{{ ref_func_tuple.append(param_ref_type) or "" }}
+{%- set param_ref_type = " ".join(ref_param_type_tuple) -%}{{ param.update({"ref_type":param_ref_type }) or "" }}{{ ref_func_tuple.append(param_ref_type|replace("*","\*")) or "" }}
 {%- endfor -%}
 {%- set ref_func_param = ", ".join(ref_func_tuple) -%}
 {%- set ref_func = ref_name + " **(** " + ref_func_param + " **)**" -%}{{ ref_name_lens.append(ref_func|length) or "" }}{{ func.update({"ref_func":ref_func}) or "" }}
