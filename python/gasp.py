@@ -153,6 +153,22 @@ class GaspEncoder(json.JSONEncoder):
             return o.gasp_to_json();
         return json.JSONEncoder.default(self,o);
 
+def convert_doxy_xml_para_to_para_tuple(para_tag):
+    para_tuple = [];
+    for ele in para_tag.iter():
+        if ele.text:
+            para_tuple.append(ele.text.strip());
+        elif ele.tag == "ref":
+            refid = ele.attrib["refid"];
+            refname = ele.text;
+            para_tuple.append(GaspTypeRefDescription(
+                refname,
+                refid
+            ));
+            if ele.tail:
+                para_tuple.append(ele.tail.strip());
+    return para_tuple;
+
 def convert_doxy_xml_type_to_type_tuple(type_tag):
     type_tuple = [];
     for ele in type_tag.iter():
@@ -178,7 +194,8 @@ def convert_doxy_xml_section_to_attribs(member_section, members_attrib):
         mem_brief_desc = memberdef.find('briefdescription').text;
         mem_detail_desc = [];
         for para in memberdef.find('detaileddescription').findall('para'):
-            mem_detail_desc.append(para.text);
+            para_tuple = convert_doxy_xml_para_to_para_tuple(para);
+            mem_detail_desc.append(para_tuple);
         #endfor
 
         members_attrib[member_id]._type_name = type_name;
@@ -208,7 +225,8 @@ def convert_doxy_xml_section_to_functions(member_section, members_func):
         mem_brief_desc = memberdef.find('briefdescription').text;
         mem_detail_desc = [];
         for para in memberdef.find('detaileddescription').findall('para'):
-            mem_detail_desc.append(para.text);
+            para_tuple = convert_doxy_xml_para_to_para_tuple(para);
+            mem_detail_desc.append(para_tuple);
         #endfor
         params = [];
         for par in memberdef.findall('param'):
@@ -246,7 +264,8 @@ def convert_doxy_xml_to_class(class_tree, xml_text, namespace):
     class_brief_desc = compound_class.find("briefdescription");
     class_tree._brief_description = class_brief_desc.text;
     for para in compound_class.find('detaileddescription').findall('para'):
-        class_tree._detailed_description.append(para.text);
+        para_tuple = convert_doxy_xml_para_to_para_tuple(para);
+        class_tree._detailed_description.append(para_tuple);
 
     for section in compound_class.findall('sectiondef'):
         section_kind = section.attrib['kind'];

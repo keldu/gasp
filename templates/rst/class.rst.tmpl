@@ -8,7 +8,14 @@
 Description
 -----------
 
-{% for desc in detailed_description %}
+{% for desc_type in detailed_description -%}
+{%- set desc_type_tuple = [] -%}
+{%- for ele in desc_type -%}
+{%- if ele is string -%}{{ desc_type_tuple.append(ele|replace("*","\*")) or "" }}
+{%- else -%}
+{%- set ele_ref = ':ref:`' + ele.name + '<' + ele.id + '>`' -%}{{ desc_type_tuple.append(ele_ref|replace("*","\*")) or "" }}{%- endif -%}
+{%- endfor -%}
+{%- set desc = " ".join(desc_type_tuple) %}
 {{ desc }}
 {% endfor %}
 
@@ -109,7 +116,14 @@ Vars Description
 {%- for aid,vars in attributes.items() %}
 .. _{{ vars.id }}:
 {{ vars.ref_type }}{% if vars.ref_type|length > 0 %} {% endif -%}{{ vars.ref_name }}
-{% for desc in vars.detailed_description %}
+{% for desc_type in vars.detailed_description -%}
+{%- set desc_type_tuple = [] -%}
+{%- for ele in desc_type -%}
+{%- if ele is string -%}{{ desc_type_tuple.append(ele|replace("*","\*")) or "" }}
+{%- else -%}
+{%- set ele_ref = ':ref:`' + ele.name + '<' + ele.id + '>`' -%}{{ desc_type_tuple.append(ele_ref|replace("*","\*")) or "" }}{%- endif -%}
+{%- endfor -%}
+{%- set desc = " ".join(desc_type_tuple) %}
 | {{ desc }}
 {% endfor %}
 {% if not loop.last %}
@@ -131,7 +145,14 @@ Methods Description
 {%- for fid,func in functions.items() %}
 .. _{{ func.id }}:
 {{ func.ref_type }}{% if func.ref_type|length > 0 %} {% endif -%}{{ func.ref_func }}
-{% for desc in func.detailed_description %}
+{% for desc_type in func.detailed_description -%}
+{%- set desc_type_tuple = [] -%}
+{%- for ele in desc_type -%}
+{%- if ele is string -%}{{ desc_type_tuple.append(ele|replace("*","\*")) or "" }}
+{%- else -%}
+{%- set ele_ref = ':ref:`' + ele.name + '<' + ele.id + '>`' -%}{{ desc_type_tuple.append(ele_ref|replace("*","\*")) or "" }}{%- endif -%}
+{%- endfor -%}
+{%- set desc = " ".join(desc_type_tuple) %}
 | {{ desc }}
 {% endfor %}
 {% if not loop.last -%}
